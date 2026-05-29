@@ -6,7 +6,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import Navbar from "../components/Navbar";
 
 const stripePromise = loadStripe(
-  "pk_test_51TcR3nQiRoiKwIYFo7Gx4kNxjWmm2LcXTij7RSTzbmmOKV3QGIDWBaQ2Z3mksVXwdwMCmTqiHfdXvlUVMF9ojoOU00TadPItdq"
+  process.env.REACT_APP_STRIPE_PUBLIC_KEY
 );
 function Cart() {
   const [cartItems,      setCartItems]      = useState([]);
