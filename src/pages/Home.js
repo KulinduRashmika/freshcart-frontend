@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 function Home() {
   const [products,         setProducts]         = useState([]);
   const [filtered,         setFiltered]         = useState([]);

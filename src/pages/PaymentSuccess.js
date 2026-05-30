@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
+
 function PaymentSuccess() {
 
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ function PaymentSuccess() {
         );
 
         await axios.post(
-          `http://localhost:8080/api/orders/place` +
+          `${API_BASE_URL}/api/orders/place` +
           `?userId=${user.id}` +
           `&customerName=${encodeURIComponent(orderData.customerName)}` +
           `&address=${encodeURIComponent(orderData.address)}` +
@@ -33,7 +35,6 @@ function PaymentSuccess() {
       } catch (err) {
 
         console.error(err);
-
         navigate("/cart");
       }
     };

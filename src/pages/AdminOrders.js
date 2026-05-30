@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "../api";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 function AdminOrders() {
   const [orders,        setOrders]        = useState([]);

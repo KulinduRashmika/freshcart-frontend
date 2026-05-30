@@ -4,7 +4,8 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../firebase";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import API_BASE from "../api";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 const GoogleIcon = () => (
   <svg className="social-icon" viewBox="0 0 24 24">
