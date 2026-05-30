@@ -48,7 +48,8 @@ function Home() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:8080/api/products");
+      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
+      const res = await axios.get(`${API_BASE_URL}/api/products`);
       setProducts(res.data);
       setFiltered(res.data);
       const cats = ["All", ...new Set(res.data.map(p => p.category).filter(Boolean))];
@@ -72,6 +73,7 @@ function Home() {
     setAddingId(product.id);
     try {
       // ✅ Matches your actual CartController: POST /api/cart/add?userId=&productId=&quantity=
+      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
       await axios.post(
         `http://localhost:8080/api/cart/add` +
         `?userId=${user.id}&productId=${product.id}&quantity=1`

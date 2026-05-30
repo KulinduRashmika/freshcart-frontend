@@ -4,26 +4,26 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import axios from "axios";
 
-
 const CATEGORIES = ["Vegetables", "Fruits", "Cakes", "Biscuits", "Beverages", "Snacks", "Dairy", "Groceries"];
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 function Admin() {
   const navigate = useNavigate();
-  const [products,   setProducts]   = useState([]);
-  const [formData,   setFormData]   = useState({ name: "", description: "", price: "", category: "" });
-  const [imageFile,  setImageFile]  = useState(null);
+  const [products, setProducts] = useState([]);
+  const [formData, setFormData] = useState({ name: "", description: "", price: "", category: "" });
+  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [editingId,  setEditingId]  = useState(null);
-  const [loading,    setLoading]    = useState(false);
-  const [fetching,   setFetching]   = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [toast,      setToast]      = useState({ show: false, msg: "", type: "success" });
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // id to confirm delete
+  const [toast, setToast] = useState({ show: false, msg: "", type: "success" });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     fetchProducts();
   }, []);
-  
 
   const getAuthHeader = async () => {
     const token = await auth.currentUser?.getIdToken();
@@ -33,9 +33,11 @@ function Admin() {
   const fetchProducts = async () => {
     setFetching(true);
     try {
-      const res = await axios.get("http://localhost:8080/api/products");
+      const headers = await getAuthHeader();
+      const res = await axios.get(`${API_BASE_URL}/api/products`, { headers });
       setProducts(res.data);
     } catch (err) {
+      console.error(err);
       showToast("Failed to load products", "error");
     } finally {
       setFetching(false);
@@ -50,7 +52,6 @@ function Admin() {
     const file = e.target.files[0];
     if (!file) return;
     setImageFile(file);
-    // Show preview
     const reader = new FileReader();
     reader.onload = (ev) => setImagePreview(ev.target.result);
     reader.readAsDataURL(file);
@@ -61,27 +62,29 @@ function Admin() {
     setLoading(true);
 
     const data = new FormData();
-    data.append("name",        formData.name);
+    data.append("name", formData.name);
     data.append("description", formData.description);
-    data.append("price",       formData.price);
-    data.append("category",    formData.category);
+    data.append("price", formData.price);
+    data.append("category", formData.category);
     if (imageFile) data.append("image", imageFile);
 
     try {
       const headers = await getAuthHeader();
-      const config  = { headers: { ...headers, "Content-Type": "multipart/form-data" } };
+      const config = { headers: { ...headers, "Content-Type": "multipart/form-data" } };
 
       if (editingId) {
-        await axios.put(`http://localhost:8080/api/products/${editingId}`, data, config);
+        await axios.put(`${API_BASE_URL}/api/products/${editingId}`, data, config);
         showToast("Product updated successfully!", "success");
       } else {
-        await axios.post("http://localhost:8080/api/products", data, config);
+        await axios.post(`${API_BASE_URL}/api/products`, data, config);
         showToast("Product added successfully!", "success");
       }
+
       resetForm();
       fetchProducts();
     } catch (error) {
-      showToast("Failed to save product", "error");
+      console.error(error);
+      showToast(error.response?.data?.message || "Failed to save product", "error");
     } finally {
       setLoading(false);
     }
@@ -89,26 +92,25 @@ function Admin() {
 
   const handleEdit = (product) => {
     setFormData({
-      name:        product.name,
+      name: product.name,
       description: product.description,
-      price:       product.price,
-      category:    product.category,
+      price: product.price,
+      category: product.category,
     });
     setEditingId(product.id);
     setImageFile(null);
-    setImagePreview(`http://localhost:8080${product.imageUrl}`);
-    // Scroll to form
+    setImagePreview(`${API_BASE_URL}${product.imageUrl}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
     try {
       const headers = await getAuthHeader();
-      await axios.delete(`http://localhost:8080/api/products/${id}`, { headers });
+      await axios.delete(`${API_BASE_URL}/api/products/${id}`, { headers });
       setProducts(prev => prev.filter(p => p.id !== id));
       setDeleteConfirm(null);
-      showToast("Product deleted", "success");
-    } catch {
+      showToast("Product deleted successfully", "success");
+    } catch (error) {
       showToast("Failed to delete product", "error");
     }
   };
@@ -132,71 +134,54 @@ function Admin() {
 
   return (
     <div className="admin-page">
-      
-
       <div className="admin-main">
 
-        {/* ── Page header ── */}
+        {/* Page Header */}
         <div className="admin-page-header">
-          <div className="admin-page-header">
-  <div>
-    <p className="admin-eyebrow">Dashboard</p>
-    <h1 className="admin-title">Admin Panel</h1>
-  </div>
+          <div>
+            <p className="admin-eyebrow">Dashboard</p>
+            <h1 className="admin-title">Admin Panel</h1>
+          </div>
 
-  <div className="admin-header-actions">
-    <button
-      className="view-orders-btn"
-      onClick={() => navigate("/admin/orders")}
-    >
-      📦 View User Orders
-    </button>
-    <button
-  className="admin-signout-btn"
-  onClick={() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+          <div className="admin-header-actions">
+            <button className="view-orders-btn" onClick={() => navigate("/admin/orders")}>
+              📦 View User Orders
+            </button>
 
-    navigate("/", { replace: true });
+            <button
+              className="admin-signout-btn"
+              onClick={() => {
+                localStorage.clear();
+                auth.signOut();
+                navigate("/", { replace: true });
+              }}
+            >
+              🚪 Sign Out
+            </button>
 
-    window.location.reload();
-  }}
->
-  🚪 Sign Out
-</button>
-
-    <div className="admin-stats">
-      <div className="stat-chip">
-        <span className="stat-chip-num">{products.length}</span>
-        <span className="stat-chip-label">Products</span>
-      </div>
-
-      <div className="stat-chip">
-        <span className="stat-chip-num">{CATEGORIES.length}</span>
-        <span className="stat-chip-label">Categories</span>
-      </div>
-    </div>
-  </div>
-</div>
-          
+            <div className="admin-stats">
+              <div className="stat-chip">
+                <span className="stat-chip-num">{products.length}</span>
+                <span className="stat-chip-label">Products</span>
+              </div>
+              <div className="stat-chip">
+                <span className="stat-chip-num">{CATEGORIES.length}</span>
+                <span className="stat-chip-label">Categories</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="admin-layout">
-
-          {/* ══ LEFT: Form ══ */}
+          {/* Form */}
           <aside className="form-panel">
             <div className="panel-header">
               <h2>{editingId ? "✏️ Edit Product" : "➕ Add New Product"}</h2>
-              {editingId && (
-                <button className="cancel-edit-btn" onClick={resetForm}>
-                  ✕ Cancel
-                </button>
-              )}
+              {editingId && <button className="cancel-edit-btn" onClick={resetForm}>✕ Cancel</button>}
             </div>
 
             <form className="product-form" onSubmit={handleSubmit}>
-
-              {/* Image upload area */}
+              {/* Image Upload */}
               <div className="image-upload-area">
                 <label className="image-upload-label" htmlFor="img-upload">
                   {imagePreview ? (
@@ -222,105 +207,52 @@ function Admin() {
                 />
               </div>
 
-              {/* Name */}
+              {/* Other Fields */}
               <div className="field-group">
                 <label className="field-label">Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="e.g. Organic Carrots"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="field-input"
-                  required
-                />
+                <input type="text" name="name" placeholder="e.g. Organic Carrots" value={formData.name} onChange={handleChange} className="field-input" required />
               </div>
 
-              {/* Category */}
               <div className="field-group">
                 <label className="field-label">Category *</label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="field-input field-select"
-                  required
-                >
+                <select name="category" value={formData.category} onChange={handleChange} className="field-input field-select" required>
                   <option value="">Select a category…</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
 
-              {/* Price */}
               <div className="field-group">
                 <label className="field-label">Price (LKR) *</label>
                 <div className="price-wrap">
                   <span className="price-prefix">LKR</span>
-                  <input
-                    type="number"
-                    name="price"
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={handleChange}
-                    className="field-input price-input"
-                    required
-                  />
+                  <input type="number" name="price" placeholder="0.00" min="0" step="0.01" value={formData.price} onChange={handleChange} className="field-input price-input" required />
                 </div>
               </div>
 
-              {/* Description */}
               <div className="field-group">
                 <label className="field-label">Description *</label>
-                <textarea
-                  name="description"
-                  placeholder="Describe the product…"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="field-input field-textarea"
-                  rows={3}
-                  required
-                />
+                <textarea name="description" placeholder="Describe the product…" value={formData.description} onChange={handleChange} className="field-input field-textarea" rows={3} required />
               </div>
 
-              {/* Submit */}
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? (
-                  <><span className="btn-spinner" /> Saving…</>
-                ) : editingId ? (
-                  <>✔ Update Product</>
-                ) : (
-                  <>+ Add Product</>
-                )}
+                {loading ? <><span className="btn-spinner" /> Saving…</> : editingId ? "✔ Update Product" : "+ Add Product"}
               </button>
-
             </form>
           </aside>
 
-          {/* ══ RIGHT: Product list ══ */}
+          {/* Products List */}
           <section className="products-panel">
             <div className="panel-header">
               <h2>All Products <span className="count-badge">{filtered.length}</span></h2>
               <div className="product-search-wrap">
                 <span className="psearch-icon">🔍</span>
-                <input
-                  type="search"
-                  placeholder="Search products…"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="product-search"
-                />
+                <input type="search" placeholder="Search products…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="product-search" />
               </div>
             </div>
 
             {fetching ? (
               <div className="products-loading">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="skeleton-row" style={{ animationDelay: `${i * 0.1}s` }} />
-                ))}
+                {[...Array(4)].map((_, i) => <div key={i} className="skeleton-row" style={{ animationDelay: `${i * 0.1}s` }} />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="empty-products">
@@ -330,22 +262,16 @@ function Admin() {
             ) : (
               <div className="products-list">
                 {filtered.map((product, i) => (
-                  <div
-                    key={product.id}
-                    className="product-row"
-                    style={{ animationDelay: `${i * 0.05}s` }}
-                  >
-                    {/* Image */}
+                  <div key={product.id} className="product-row" style={{ animationDelay: `${i * 0.05}s` }}>
                     <div className="row-img-wrap">
                       <img
-                        src={`http://localhost:8080${product.imageUrl}`}
+                        src={`${API_BASE_URL}${product.imageUrl}`}
                         alt={product.name}
                         className="row-img"
                         onError={e => e.target.src = `https://via.placeholder.com/72x72/1a1d27/c9a84c?text=${encodeURIComponent(product.name?.[0] || "?")}`}
                       />
                     </div>
 
-                    {/* Info */}
                     <div className="row-info">
                       <p className="row-name">{product.name}</p>
                       <div className="row-meta">
@@ -359,33 +285,19 @@ function Admin() {
                       )}
                     </div>
 
-                    {/* Actions */}
                     <div className="row-actions">
-                      <button
-                        className="row-edit-btn"
-                        onClick={() => handleEdit(product)}
-                        title="Edit"
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="row-delete-btn"
-                        onClick={() => setDeleteConfirm(product.id)}
-                        title="Delete"
-                      >
-                        🗑️ Delete
-                      </button>
+                      <button className="row-edit-btn" onClick={() => handleEdit(product)} title="Edit">✏️ Edit</button>
+                      <button className="row-delete-btn" onClick={() => setDeleteConfirm(product.id)} title="Delete">🗑️ Delete</button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </section>
-
         </div>
       </div>
 
-      {/* ── Delete confirm modal ── */}
+      {/* Delete Modal */}
       {deleteConfirm && (
         <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
           <div className="confirm-modal" onClick={e => e.stopPropagation()}>
@@ -400,7 +312,7 @@ function Admin() {
         </div>
       )}
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       <div className={`admin-toast ${toast.type} ${toast.show ? "show" : ""}`}>
         <span className="toast-dot" />
         {toast.msg}

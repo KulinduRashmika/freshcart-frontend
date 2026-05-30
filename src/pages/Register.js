@@ -96,7 +96,8 @@ function Register() {
       await createUserWithEmailAndPassword(auth, email, password);
 
       /* 2. Persist to Spring Boot backend */
-      await axios.post("http://localhost:8080/api/auth/register", {
+      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
+      await axios.post(`${API_BASE_URL}/api/auth/register`, {
         name,
         email,
         password,

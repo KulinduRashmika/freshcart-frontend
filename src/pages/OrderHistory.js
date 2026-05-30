@@ -26,7 +26,7 @@ function OrderHistory() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/orders/my?userId=${userId}`);
+      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
       setOrders(res.data || []);
     } catch (err) {
       console.error("Failed to load orders", err);

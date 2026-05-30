@@ -4,32 +4,10 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../firebase";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-/* ── Inline SVG icons (no extra library needed) ── */
-const CartIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-    <line x1="3" y1="6" x2="21" y2="6"/>
-    <path d="M16 10a4 4 0 01-8 0"/>
-  </svg>
-);
-
-const MailIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="17" height="17">
-    <rect x="2" y="4" width="20" height="16" rx="2"/>
-    <path d="M2 7l10 7 10-7"/>
-  </svg>
-);
-
-const LockIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="17" height="17">
-    <rect x="3" y="11" width="18" height="11" rx="2"/>
-    <path d="M7 11V7a5 5 0 0110 0v4"/>
-  </svg>
-);
+import API_BASE from "../api";
 
 const GoogleIcon = () => (
-  <svg className="social-icon" viewBox="0 0 24 24" fill="currentColor">
+  <svg className="social-icon" viewBox="0 0 24 24">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -43,53 +21,38 @@ const FacebookIcon = () => (
   </svg>
 );
 
-/* ── Component ── */
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
 
   const loginUser = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
-    // Admin login
+
     if (email === "admin@gmail.com" && password === "admin123") {
       navigate("/admin");
       setLoading(false);
       return;
     }
-    
+
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/auth/login",
-        { email, password }
-      );
-      
-      console.log("Login response:", response.data);
-      
-      // Check if login was successful based on your backend response
-      if (response.data && response.data.message === "Login successful") {
-        // Store user data in localStorage if needed
-        localStorage.setItem("user", JSON.stringify(response.data));
-localStorage.setItem("token", response.data.token);
+      const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+      if (response.data?.message === "Login successful") {
+        localStorage.setItem("user",  JSON.stringify(response.data));
+        localStorage.setItem("token", response.data.token);
         navigate("/home");
       } else {
         setError(response.data?.error || "Login failed. Please try again.");
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      
-      if (error.response) {
-        // Server responded with error
-        const errorMsg = error.response.data?.error || "Invalid email or password";
-        setError(errorMsg);
-      } else if (error.request) {
-        // No response from server
-        setError("Cannot connect to server. Please check if backend is running.");
+    } catch (err) {
+      if (err.response) {
+        setError(err.response.data?.error || "Invalid email or password");
+      } else if (err.request) {
+        setError("Cannot connect to server.");
       } else {
         setError("An error occurred. Please try again.");
       }
@@ -99,14 +62,11 @@ localStorage.setItem("token", response.data.token);
   };
 
   const googleLogin = async () => {
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("Google login success:", result.user);
+      await signInWithPopup(auth, googleProvider);
       navigate("/home");
-    } catch (error) {
-      console.error("Google login error:", error);
+    } catch {
       setError("Google login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -114,14 +74,11 @@ localStorage.setItem("token", response.data.token);
   };
 
   const facebookLogin = async () => {
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
-      const result = await signInWithPopup(auth, facebookProvider);
-      console.log("Facebook login success:", result.user);
+      await signInWithPopup(auth, facebookProvider);
       navigate("/home");
-    } catch (error) {
-      console.error("Facebook login error:", error);
+    } catch {
       setError("Facebook login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -130,85 +87,94 @@ localStorage.setItem("token", response.data.token);
 
   return (
     <div className="login-page">
-      <div className="login-card">
-
-        {/* Header */}
-        <div className="login-header">
-          <div className="login-icon">
-            <CartIcon />
+      <div className="login-left">
+        <div className="login-left-content">
+          <div className="login-brand">
+            <div className="brand-icon-lg">
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 01-8 0"/>
+              </svg>
+            </div>
+            <span className="brand-name-lg">FreshCart</span>
           </div>
-          <h1>Shopping Cart</h1>
-          <p className="subtitle">Welcome back — sign in to continue</p>
+          <h1 className="login-headline">Fresh market,<br/><em>delivered daily</em></h1>
+          <p className="login-sub">Vegetables, fruits, cakes and more — right to your door.</p>
+          <div className="login-features">
+            {["Fresh produce every day", "Free delivery on all orders", "Secure checkout"].map(f => (
+              <div className="login-feature" key={f}>
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {f}
+              </div>
+            ))}
+          </div>
         </div>
+        <div className="login-orb-a" /><div className="login-orb-b" />
+      </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="error-alert">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {/* Email / Password form */}
-        <form className="login-form" onSubmit={loginUser}>
-          <div className="input-group">
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              disabled={loading}
-            />
-            <span className="input-icon"><MailIcon /></span>
+      <div className="login-right">
+        <div className="login-card">
+          <div className="login-card-header">
+            <h2>Welcome back</h2>
+            <p>Sign in to your account</p>
           </div>
 
-          <div className="input-group">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              disabled={loading}
-            />
-            <span className="input-icon"><LockIcon /></span>
+          {error && (
+            <div className="login-error">
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              {error}
+            </div>
+          )}
+
+          <form className="login-form" onSubmit={loginUser}>
+            <div className="field-group">
+              <label>Email address</label>
+              <div className="input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="field-icon">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/>
+                </svg>
+                <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" disabled={loading} />
+              </div>
+            </div>
+
+            <div className="field-group">
+              <div className="field-label-row">
+                <label>Password</label>
+                <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
+              </div>
+              <div className="input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="field-icon">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" disabled={loading} />
+              </div>
+            </div>
+
+            <button className="login-submit-btn" type="submit" disabled={loading}>
+              {loading ? <><span className="btn-spinner" /> Signing in…</> : "Sign in"}
+            </button>
+          </form>
+
+          <div className="login-divider"><span>or continue with</span></div>
+
+          <div className="social-buttons">
+            <button className="social-btn" onClick={googleLogin} disabled={loading}>
+              <GoogleIcon /> Google
+            </button>
+            <button className="social-btn" onClick={facebookLogin} disabled={loading}>
+              <FacebookIcon /> Facebook
+            </button>
           </div>
 
-          <div className="forgot-link">
-            <Link to="/forgot-password">Forgot password?</Link>
-          </div>
-
-          <button className="login-btn" type="submit" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="divider">
-          <span>or continue with</span>
+          <p className="login-register-link">
+            Don't have an account? <Link to="/register">Create one</Link>
+          </p>
         </div>
-
-        {/* Social logins */}
-        <div className="social-buttons">
-          <button className="google-btn" onClick={googleLogin} type="button" disabled={loading}>
-            <GoogleIcon />
-            Continue with Google
-          </button>
-
-          <button className="facebook-btn" onClick={facebookLogin} type="button" disabled={loading}>
-            <FacebookIcon />
-            Continue with Facebook
-          </button>
-        </div>
-
-        {/* Register */}
-        <p className="register-link">
-          Don't have an account?
-          <Link to="/register"> Create one</Link>
-        </p>
-
       </div>
     </div>
   );
