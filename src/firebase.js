@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth
 
 const firebaseConfig = {
   apiKey: "AIzaSyA5l5EHf_w_nJJFotGMG0rSuoLjUaKmvgg",
-  authDomain: "freshcart-frontend-pttt.vercel.app",  // ← change to your Vercel URL
+  authDomain: "shopping-cart-app-4f1d7.firebaseapp.com",  // ← revert to Firebase default
   projectId: "shopping-cart-app-4f1d7",
   storageBucket: "shopping-cart-app-4f1d7.firebasestorage.app",
   messagingSenderId: "136998807166",
