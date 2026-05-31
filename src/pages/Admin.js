@@ -8,6 +8,13 @@ const CATEGORIES = ["Vegetables", "Fruits", "Cakes", "Biscuits", "Beverages", "S
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
+// ✅ Cloudinary: imageUrl is now a full URL, no prefix needed
+const getImageSrc = (imageUrl) => {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith("http")) return imageUrl; // Cloudinary full URL
+  return `${API_BASE_URL}${imageUrl}`;              // legacy local path fallback
+};
+
 function Admin() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -21,9 +28,7 @@ function Admin() {
   const [toast, setToast] = useState({ show: false, msg: "", type: "success" });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
   const getAuthHeader = async () => {
     const token = await auth.currentUser?.getIdToken();
@@ -44,9 +49,7 @@ function Admin() {
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -60,7 +63,6 @@ function Admin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     const data = new FormData();
     data.append("name", formData.name);
     data.append("description", formData.description);
@@ -71,7 +73,6 @@ function Admin() {
     try {
       const headers = await getAuthHeader();
       const config = { headers: { ...headers, "Content-Type": "multipart/form-data" } };
-
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/products/${editingId}`, data, config);
         showToast("Product updated successfully!", "success");
@@ -79,7 +80,6 @@ function Admin() {
         await axios.post(`${API_BASE_URL}/api/products`, data, config);
         showToast("Product added successfully!", "success");
       }
-
       resetForm();
       fetchProducts();
     } catch (error) {
@@ -99,7 +99,8 @@ function Admin() {
     });
     setEditingId(product.id);
     setImageFile(null);
-    setImagePreview(`${API_BASE_URL}${product.imageUrl}`);
+    // ✅ Cloudinary: use helper to get correct image URL
+    setImagePreview(getImageSrc(product.imageUrl));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -110,7 +111,7 @@ function Admin() {
       setProducts(prev => prev.filter(p => p.id !== id));
       setDeleteConfirm(null);
       showToast("Product deleted successfully", "success");
-    } catch (error) {
+    } catch {
       showToast("Failed to delete product", "error");
     }
   };
@@ -135,30 +136,22 @@ function Admin() {
   return (
     <div className="admin-page">
       <div className="admin-main">
-
-        {/* Page Header */}
         <div className="admin-page-header">
           <div>
             <p className="admin-eyebrow">Dashboard</p>
             <h1 className="admin-title">Admin Panel</h1>
           </div>
-
           <div className="admin-header-actions">
             <button className="view-orders-btn" onClick={() => navigate("/admin/orders")}>
               📦 View User Orders
             </button>
-
-            <button
-              className="admin-signout-btn"
-              onClick={() => {
-                localStorage.clear();
-                auth.signOut();
-                navigate("/", { replace: true });
-              }}
-            >
+            <button className="admin-signout-btn" onClick={() => {
+              localStorage.clear();
+              auth.signOut();
+              navigate("/", { replace: true });
+            }}>
               🚪 Sign Out
             </button>
-
             <div className="admin-stats">
               <div className="stat-chip">
                 <span className="stat-chip-num">{products.length}</span>
@@ -173,7 +166,6 @@ function Admin() {
         </div>
 
         <div className="admin-layout">
-          {/* Form */}
           <aside className="form-panel">
             <div className="panel-header">
               <h2>{editingId ? "✏️ Edit Product" : "➕ Add New Product"}</h2>
@@ -181,7 +173,6 @@ function Admin() {
             </div>
 
             <form className="product-form" onSubmit={handleSubmit}>
-              {/* Image Upload */}
               <div className="image-upload-area">
                 <label className="image-upload-label" htmlFor="img-upload">
                   {imagePreview ? (
@@ -193,26 +184,15 @@ function Admin() {
                       <span className="upload-hint">JPG, PNG, WEBP</span>
                     </div>
                   )}
-                  <div className="upload-overlay">
-                    <span>📷 Change</span>
-                  </div>
+                  <div className="upload-overlay"><span>📷 Change</span></div>
                 </label>
-                <input
-                  id="img-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  required={!editingId}
-                  style={{ display: "none" }}
-                />
+                <input id="img-upload" type="file" accept="image/*" onChange={handleFileChange} required={!editingId} style={{ display: "none" }} />
               </div>
 
-              {/* Other Fields */}
               <div className="field-group">
                 <label className="field-label">Product Name *</label>
                 <input type="text" name="name" placeholder="e.g. Organic Carrots" value={formData.name} onChange={handleChange} className="field-input" required />
               </div>
-
               <div className="field-group">
                 <label className="field-label">Category *</label>
                 <select name="category" value={formData.category} onChange={handleChange} className="field-input field-select" required>
@@ -220,7 +200,6 @@ function Admin() {
                   {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
-
               <div className="field-group">
                 <label className="field-label">Price (LKR) *</label>
                 <div className="price-wrap">
@@ -228,19 +207,16 @@ function Admin() {
                   <input type="number" name="price" placeholder="0.00" min="0" step="0.01" value={formData.price} onChange={handleChange} className="field-input price-input" required />
                 </div>
               </div>
-
               <div className="field-group">
                 <label className="field-label">Description *</label>
                 <textarea name="description" placeholder="Describe the product…" value={formData.description} onChange={handleChange} className="field-input field-textarea" rows={3} required />
               </div>
-
               <button type="submit" className="submit-btn" disabled={loading}>
                 {loading ? <><span className="btn-spinner" /> Saving…</> : editingId ? "✔ Update Product" : "+ Add Product"}
               </button>
             </form>
           </aside>
 
-          {/* Products List */}
           <section className="products-panel">
             <div className="panel-header">
               <h2>All Products <span className="count-badge">{filtered.length}</span></h2>
@@ -264,14 +240,14 @@ function Admin() {
                 {filtered.map((product, i) => (
                   <div key={product.id} className="product-row" style={{ animationDelay: `${i * 0.05}s` }}>
                     <div className="row-img-wrap">
+                      {/* ✅ Cloudinary: use helper */}
                       <img
-                        src={`${API_BASE_URL}${product.imageUrl}`}
+                        src={getImageSrc(product.imageUrl)}
                         alt={product.name}
                         className="row-img"
                         onError={e => e.target.src = `https://via.placeholder.com/72x72/1a1d27/c9a84c?text=${encodeURIComponent(product.name?.[0] || "?")}`}
                       />
                     </div>
-
                     <div className="row-info">
                       <p className="row-name">{product.name}</p>
                       <div className="row-meta">
@@ -279,15 +255,12 @@ function Admin() {
                         <span className="row-price">LKR {Number(product.price).toFixed(2)}</span>
                       </div>
                       {product.description && (
-                        <p className="row-desc">
-                          {product.description.substring(0, 65)}{product.description.length > 65 ? "…" : ""}
-                        </p>
+                        <p className="row-desc">{product.description.substring(0, 65)}{product.description.length > 65 ? "…" : ""}</p>
                       )}
                     </div>
-
                     <div className="row-actions">
-                      <button className="row-edit-btn" onClick={() => handleEdit(product)} title="Edit">✏️ Edit</button>
-                      <button className="row-delete-btn" onClick={() => setDeleteConfirm(product.id)} title="Delete">🗑️ Delete</button>
+                      <button className="row-edit-btn" onClick={() => handleEdit(product)}>✏️ Edit</button>
+                      <button className="row-delete-btn" onClick={() => setDeleteConfirm(product.id)}>🗑️ Delete</button>
                     </div>
                   </div>
                 ))}
@@ -297,7 +270,6 @@ function Admin() {
         </div>
       </div>
 
-      {/* Delete Modal */}
       {deleteConfirm && (
         <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
           <div className="confirm-modal" onClick={e => e.stopPropagation()}>
@@ -312,10 +284,8 @@ function Admin() {
         </div>
       )}
 
-      {/* Toast */}
       <div className={`admin-toast ${toast.type} ${toast.show ? "show" : ""}`}>
-        <span className="toast-dot" />
-        {toast.msg}
+        <span className="toast-dot" />{toast.msg}
       </div>
     </div>
   );
