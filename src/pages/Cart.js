@@ -190,7 +190,7 @@ function Cart() {
                   <div key={item.id} className="cart-item-row" style={{ animationDelay: `${i * 0.06}s` }}>
                     {/* ✅ Fixed: was API_BASE (undefined) */}
                     <img
-  src={product.imageUrl}
+  src={`${API_BASE_URL}${item.product?.imageUrl}`}
   alt={item.product?.name}
   className="item-img"
   onError={(e) =>
