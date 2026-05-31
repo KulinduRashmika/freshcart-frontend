@@ -49,54 +49,39 @@ function Login() {
 }
 
     try {
-  const response = await axios.post(
-    `${API_BASE_URL}/api/auth/login`,
-    { email, password }
-  );
-
-  console.log("LOGIN RESPONSE:", response.data);
-
-  if (response.data?.message === "Login successful") {
-    localStorage.setItem("user", JSON.stringify(response.data));
-    navigate("/home");
-  }
-} catch (err) {
-  console.log("STATUS:", err.response?.status);
-  console.log("ERROR DATA:", err.response?.data);
-
-  setError(
-    err.response?.data?.error || "Login failed"
-  );
-}
+      // ✅ Fixed: was API_BASE (undefined), now API_BASE_URL
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
+      if (response.data?.message === "Login successful") {
+        localStorage.setItem("user",  JSON.stringify(response.data));
+        localStorage.setItem("token", response.data.token);
+        navigate("/home");
+      } else {
+        setError(response.data?.error || "Login failed. Please try again.");
+      }
+    } catch (err) {
+      if (err.response) {
+        setError(err.response.data?.error || "Invalid email or password");
+      } else if (err.request) {
+        setError("Cannot connect to server.");
+      } else {
+        setError("An error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-const googleLogin = async () => {
-  setLoading(true);
-  setError("");
-
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-
-    const user = result.user;
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: user.uid,
-        name: user.displayName,
-        email: user.email,
-      })
-    );
-
-    navigate("/home");
-
-  } catch (error) {
-    console.error(error);
-    setError("Google login failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const googleLogin = async () => {
+    setLoading(true); setError("");
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate("/home");
+    } catch {
+      setError("Google login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const facebookLogin = async () => {
     setLoading(true); setError("");
