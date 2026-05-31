@@ -71,17 +71,36 @@ function Login() {
     }
   };
 
-  const googleLogin = async () => {
-    setLoading(true); setError("");
-    try {
-      await signInWithPopup(auth, googleProvider);
-      navigate("/home");
-    } catch {
-      setError("Google login failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+ const googleLogin = async () => {
+  setLoading(true);
+  setError("");
+
+  try {
+
+    const result = await signInWithPopup(auth, googleProvider);
+
+    const response = await axios.post(
+      `${API_BASE_URL}/api/auth/google-login`,
+      {
+        name: result.user.displayName,
+        email: result.user.email
+      }
+    );
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(response.data)
+    );
+
+    navigate("/home");
+
+  } catch (error) {
+    console.error(error);
+    setError("Google login failed.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const facebookLogin = async () => {
     setLoading(true); setError("");
