@@ -184,7 +184,7 @@ function Home() {
                 <div className="product-img-wrap">
                   {/* ✅ Fixed: was hardcoded http://localhost:8080 */}
                   <img
-                    src={`${API_BASE_URL}${product.imageUrl}`}
+                    src={product.imageUrl}
                     alt={product.name}
                     className="product-img"
                     onError={e =>
