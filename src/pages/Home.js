@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
-// ✅ Single source of truth for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 function Home() {
@@ -27,8 +26,9 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    // ✅ Fixed: check for "user" not just "token" — Google/Facebook login sets user but not always a JWT token
+    const user = localStorage.getItem("user");
+    if (!user) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
@@ -48,7 +48,6 @@ function Home() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // ✅ Fixed: was hardcoded localhost
       const res = await axios.get(`${API_BASE_URL}/api/products`);
       setProducts(res.data);
       setFiltered(res.data);
@@ -72,7 +71,6 @@ function Home() {
 
     setAddingId(product.id);
     try {
-      // ✅ Fixed: was hardcoded http://localhost:8080
       await axios.post(
         `${API_BASE_URL}/api/cart/add` +
         `?userId=${user.id}&productId=${product.id}&quantity=1`
@@ -182,7 +180,6 @@ function Home() {
                 style={{ animationDelay: `${i * 0.06}s` }}
               >
                 <div className="product-img-wrap">
-                  {/* ✅ Fixed: was hardcoded http://localhost:8080 */}
                   <img
                     src={product.imageUrl}
                     alt={product.name}

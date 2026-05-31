@@ -36,6 +36,7 @@ function Login() {
 
     if (email === "admin@gmail.com" && password === "admin123") {
       localStorage.setItem("user", JSON.stringify({ email: "admin@gmail.com", role: "ADMIN" }));
+      localStorage.setItem("token", "admin-token");
       navigate("/admin");
       setLoading(false);
       return;
@@ -45,7 +46,7 @@ function Login() {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       if (response.data?.message === "Login successful") {
         localStorage.setItem("user",  JSON.stringify(response.data));
-        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("token", response.data.token || response.data.email); // fallback if no token
         navigate("/home");
       } else {
         setError(response.data?.error || "Login failed. Please try again.");
@@ -71,9 +72,12 @@ function Login() {
         name: displayName,
       });
       localStorage.setItem("user", JSON.stringify(res.data));
+      // ✅ Set token so Home.js guard doesn't kick social login users out
+      localStorage.setItem("token", res.data.token || email);
     } catch {
       // Backend offline — store basic Firebase info so app still works
       localStorage.setItem("user", JSON.stringify({ email, name: displayName }));
+      localStorage.setItem("token", email); // use email as fallback token
     }
   };
 
@@ -81,14 +85,10 @@ function Login() {
     setLoading(true);
     setError("");
     try {
-      // signInWithPopup works fine — the previous COOP warning was non-fatal
-      // Using popup avoids the Vercel sessionStorage redirect issue entirely
       const result = await signInWithPopup(auth, googleProvider);
       await syncUserToBackend(result.user);
       navigate("/home");
     } catch (err) {
-      // COOP warning produces error code "auth/cancelled-popup-request" — ignore it
-      // only show error for real failures
       if (err?.code !== "auth/cancelled-popup-request" && err?.code !== "auth/popup-closed-by-user") {
         setError("Google login failed. Please try again.");
       }
