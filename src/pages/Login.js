@@ -35,10 +35,18 @@ function Login() {
     setError("");
 
     if (email === "admin@gmail.com" && password === "admin123") {
-      navigate("/admin");
-      setLoading(false);
-      return;
-    }
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      email: "admin@gmail.com",
+      role: "ADMIN"
+    })
+  );
+
+  navigate("/admin");
+  setLoading(false);
+  return;
+}
 
     try {
       // ✅ Fixed: was API_BASE (undefined), now API_BASE_URL
