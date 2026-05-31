@@ -27,19 +27,19 @@ function OrderHistory() {
   }, [userId]);
 
   const fetchOrders = async () => {
-    try {
-      // ✅ Fixed: was completely missing the axios.get call
-      axios.get(
-  `${API_BASE_URL}/api/orders/my?userId=${user.id}`
-)
-console.log(response.data);
-      setOrders(res.data || []);
-    } catch (err) {
-      console.error("Failed to load orders", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/orders/my?userId=${user.id}`
+    );
+
+    console.log("ORDERS:", response.data); // ✅ here
+
+    setOrders(response.data);
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const viewDetails = (order) => {
     try {
