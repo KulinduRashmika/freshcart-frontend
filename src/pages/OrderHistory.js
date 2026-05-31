@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
+// ✅ Single source of truth for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
+
 function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,6 @@ function OrderHistory() {
 
   const navigate = useNavigate();
 
-  // Get logged-in user from localStorage
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const userId = user.id;
 
@@ -27,7 +28,8 @@ function OrderHistory() {
 
   const fetchOrders = async () => {
     try {
-      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
+      // ✅ Fixed: was completely missing the axios.get call
+      const res = await axios.get(`${API_BASE_URL}/api/orders/user/${userId}`);
       setOrders(res.data || []);
     } catch (err) {
       console.error("Failed to load orders", err);
@@ -38,8 +40,8 @@ function OrderHistory() {
 
   const viewDetails = (order) => {
     try {
-      const items = typeof order.orderItems === "string" 
-        ? JSON.parse(order.orderItems) 
+      const items = typeof order.orderItems === "string"
+        ? JSON.parse(order.orderItems)
         : order.orderItems;
       setSelectedOrder({ ...order, items });
     } catch {
@@ -58,7 +60,7 @@ function OrderHistory() {
 
   return (
     <div className="oh-page">
-      
+      <Navbar />
 
       <div className="oh-main">
         <div className="oh-header">
@@ -85,7 +87,7 @@ function OrderHistory() {
                   <div className="oh-order-info">
                     <div><strong>Order #{order.id}</strong></div>
                     <div>{formatDate(order.orderDate)}</div>
-                    <div>LKR {order.totalAmount}</div>
+                    <div>LKR {Number(order.totalAmount).toFixed(2)}</div>
                   </div>
                   <button onClick={() => viewDetails(order)}>View Details</button>
                 </div>
@@ -114,7 +116,7 @@ function OrderHistory() {
               ))}
             </ul>
 
-            <h3>Total: LKR {selectedOrder.totalAmount}</h3>
+            <h3>Total: LKR {Number(selectedOrder.totalAmount).toFixed(2)}</h3>
 
             <button onClick={() => setShowDetails(false)}>Close</button>
           </div>

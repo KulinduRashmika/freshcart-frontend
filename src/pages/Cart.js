@@ -5,6 +5,7 @@ import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import Navbar from "../components/Navbar";
 
+// ✅ Single source of truth for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
@@ -30,7 +31,8 @@ function Cart() {
     const user = getUser();
     if (!user) { navigate("/"); return; }
     try {
-      const res = await axios.get(`${API_BASE}/api/cart/${user.id}`);
+      // ✅ Fixed: was API_BASE (undefined)
+      const res = await axios.get(`${API_BASE_URL}/api/cart/${user.id}`);
       setCartItems(res.data || []);
     } catch (err) {
       showToast("Failed to load cart", "error");
@@ -42,10 +44,11 @@ function Cart() {
   const updateQuantity = async (cartId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
-      await axios.delete(`${API_BASE}/api/cart/${cartId}`);
+      // ✅ Fixed: was API_BASE (undefined)
+      await axios.delete(`${API_BASE_URL}/api/cart/${cartId}`);
       const user = getUser();
       const item = cartItems.find(i => i.id === cartId);
-      await axios.post(`${API_BASE}/api/cart/add?userId=${user.id}&productId=${item.product.id}&quantity=${newQuantity}`);
+      await axios.post(`${API_BASE_URL}/api/cart/add?userId=${user.id}&productId=${item.product.id}&quantity=${newQuantity}`);
       fetchCart();
     } catch (err) {
       showToast("Failed to update quantity", "error");
@@ -54,7 +57,8 @@ function Cart() {
 
   const removeItem = async (cartId) => {
     try {
-      await axios.delete(`${API_BASE}/api/cart/${cartId}`);
+      // ✅ Fixed: was API_BASE (undefined)
+      await axios.delete(`${API_BASE_URL}/api/cart/${cartId}`);
       setCartItems(prev => prev.filter(i => i.id !== cartId));
       showToast("Item removed", "success");
     } catch {
@@ -65,7 +69,8 @@ function Cart() {
   const confirmClear = async () => {
     const user = getUser();
     try {
-      await axios.delete(`${API_BASE}/api/cart/clear/${user.id}`);
+      // ✅ Fixed: was API_BASE (undefined)
+      await axios.delete(`${API_BASE_URL}/api/cart/clear/${user.id}`);
       setCartItems([]);
       setDeleteConfirm(null);
       showToast("Cart cleared", "success");
@@ -90,8 +95,9 @@ function Cart() {
     if (!user?.id) { navigate("/"); return; }
     setPlacing(true);
     try {
+      // ✅ Fixed: was API_BASE (undefined)
       await axios.post(
-        `${API_BASE}/api/orders/place?userId=${user.id}` +
+        `${API_BASE_URL}/api/orders/place?userId=${user.id}` +
         `&customerName=${encodeURIComponent(customerName)}` +
         `&address=${encodeURIComponent(address)}` +
         `&phone=${encodeURIComponent(phone)}`
@@ -115,7 +121,8 @@ function Cart() {
       return;
     }
     try {
-      const response = await axios.post(`${API_BASE}/api/payment/create-checkout-session`, { amount: getTotal() });
+      // ✅ Fixed: was API_BASE (undefined)
+      const response = await axios.post(`${API_BASE_URL}/api/payment/create-checkout-session`, { amount: getTotal() });
       localStorage.setItem("pendingOrder", JSON.stringify(orderData));
       window.location.href = response.data.url;
     } catch {
@@ -181,8 +188,9 @@ function Cart() {
               <div className="cart-items-list">
                 {cartItems.map((item, i) => (
                   <div key={item.id} className="cart-item-row" style={{ animationDelay: `${i * 0.06}s` }}>
+                    {/* ✅ Fixed: was API_BASE (undefined) */}
                     <img
-                      src={`${API_BASE}${item.product?.imageUrl || ""}`}
+                      src={`${API_BASE_URL}${item.product?.imageUrl || ""}`}
                       alt={item.product?.name}
                       className="item-img"
                       onError={e => e.target.src = `https://via.placeholder.com/72x72/1a1d27/c9a84c?text=${encodeURIComponent(item.product?.name?.[0] || "?")}`}

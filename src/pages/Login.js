@@ -41,7 +41,8 @@ function Login() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+      // ✅ Fixed: was API_BASE (undefined), now API_BASE_URL
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       if (response.data?.message === "Login successful") {
         localStorage.setItem("user",  JSON.stringify(response.data));
         localStorage.setItem("token", response.data.token);

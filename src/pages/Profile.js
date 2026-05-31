@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
+// ✅ Single source of truth for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 function Profile() {
@@ -21,7 +22,8 @@ function Profile() {
     const savedUser = JSON.parse(localStorage.getItem("user"));
     if (!savedUser?.id) { navigate("/"); return; }
     try {
-      const res = await axios.get(`${API_BASE}/api/users/${savedUser.id}`);
+      // ✅ Fixed: was API_BASE (undefined)
+      const res = await axios.get(`${API_BASE_URL}/api/users/${savedUser.id}`);
       setUser(res.data);
       setFormData(res.data);
     } catch {
@@ -37,7 +39,8 @@ function Profile() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await axios.put(`${API_BASE}/api/users/${user.id}`, formData);
+      // ✅ Fixed: was API_BASE (undefined)
+      const res = await axios.put(`${API_BASE_URL}/api/users/${user.id}`, formData);
       localStorage.setItem("user", JSON.stringify(res.data));
       setUser(res.data);
       setEditing(false);

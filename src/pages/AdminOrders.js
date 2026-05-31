@@ -4,6 +4,7 @@ import axios from "axios";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
+// ✅ Single source of truth for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 function AdminOrders() {
@@ -23,7 +24,8 @@ function AdminOrders() {
     setLoading(true);
     try {
       const headers = await getAuthHeader();
-      const res = await axios.get(`${API_BASE}/api/orders/all`, { headers });
+      // ✅ Fixed: was API_BASE (undefined)
+      const res = await axios.get(`${API_BASE_URL}/api/orders/all`, { headers });
       setOrders(res.data);
     } catch {
       showToast("Failed to load orders", "error");
@@ -47,7 +49,8 @@ function AdminOrders() {
     if (!window.confirm("Mark this order as delivered and remove it?")) return;
     try {
       const headers = await getAuthHeader();
-      await axios.delete(`${API_BASE}/api/orders/${id}`, { headers });
+      // ✅ Fixed: was API_BASE (undefined)
+      await axios.delete(`${API_BASE_URL}/api/orders/${id}`, { headers });
       setOrders(prev => prev.filter(o => o.id !== id));
       showToast("Order marked as delivered", "success");
     } catch {

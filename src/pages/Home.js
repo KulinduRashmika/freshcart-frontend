@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
+// ✅ Single source of truth for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
+
 function Home() {
   const [products,         setProducts]         = useState([]);
   const [filtered,         setFiltered]         = useState([]);
@@ -18,21 +20,18 @@ function Home() {
 
   const navigate = useNavigate();
 
-  // ── Read user from localStorage (matches your actual backend) ──
   const getUser = () => JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchProducts();
   }, []);
+
   useEffect(() => {
-
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    navigate("/", { replace: true });
-  }
-
-}, [navigate]);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     let result = products;
@@ -49,7 +48,7 @@ function Home() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
+      // ✅ Fixed: was hardcoded localhost
       const res = await axios.get(`${API_BASE_URL}/api/products`);
       setProducts(res.data);
       setFiltered(res.data);
@@ -73,10 +72,9 @@ function Home() {
 
     setAddingId(product.id);
     try {
-      // ✅ Matches your actual CartController: POST /api/cart/add?userId=&productId=&quantity=
-      const API_BASE_URL = 'https://freshcart-backend-gsss.onrender.com';
+      // ✅ Fixed: was hardcoded http://localhost:8080
       await axios.post(
-        `http://localhost:8080/api/cart/add` +
+        `${API_BASE_URL}/api/cart/add` +
         `?userId=${user.id}&productId=${product.id}&quantity=1`
       );
       setAddedId(product.id);
@@ -107,8 +105,7 @@ function Home() {
 
   return (
     <div className="home-page">
-      {/* Single Navbar — remove any inline navbar from this component */}
-      
+      <Navbar />
 
       {/* ── Hero ── */}
       <section className="hero">
@@ -185,8 +182,9 @@ function Home() {
                 style={{ animationDelay: `${i * 0.06}s` }}
               >
                 <div className="product-img-wrap">
+                  {/* ✅ Fixed: was hardcoded http://localhost:8080 */}
                   <img
-                    src={`http://localhost:8080${product.imageUrl}`}
+                    src={`${API_BASE_URL}${product.imageUrl}`}
                     alt={product.name}
                     className="product-img"
                     onError={e =>
