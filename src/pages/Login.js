@@ -1,8 +1,8 @@
 import "./Login.css";
 import axios from "axios";
-import { signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../firebase";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
@@ -28,32 +28,6 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
-  const redirectHandled = useRef(false);
-
-  useEffect(() => {
-    // getRedirectResult resolves with the result of signInWithRedirect
-    // It returns null if no redirect was pending — safe to call on every load
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!result || !result.user || redirectHandled.current) return;
-        redirectHandled.current = true;
-
-        const { email: userEmail, displayName } = result.user;
-        try {
-          const res = await axios.post(`${API_BASE_URL}/api/auth/google-login`, {
-            email: userEmail,
-            name: displayName,
-          });
-          localStorage.setItem("user", JSON.stringify(res.data));
-        } catch {
-          localStorage.setItem("user", JSON.stringify({ email: userEmail, name: displayName }));
-        }
-        navigate("/home");
-      })
-      .catch((err) => {
-        console.error("Redirect result error:", err);
-      });
-  }, []);
 
   const loginUser = async (e) => {
     e.preventDefault();
@@ -61,13 +35,7 @@ function Login() {
     setError("");
 
     if (email === "admin@gmail.com" && password === "admin123") {
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: "admin@gmail.com",
-          role: "ADMIN"
-        })
-      );
+      localStorage.setItem("user", JSON.stringify({ email: "admin@gmail.com", role: "ADMIN" }));
       navigate("/admin");
       setLoading(false);
       return;
@@ -95,36 +63,53 @@ function Login() {
     }
   };
 
-  const googleLogin = async () => {
-    setLoading(true); setError("");
+  const syncUserToBackend = async (firebaseUser) => {
+    const { email, displayName } = firebaseUser;
     try {
-      await signInWithRedirect(auth, googleProvider);
-      // Page will redirect to Google — result handled in useEffect above
+      const res = await axios.post(`${API_BASE_URL}/api/auth/google-login`, {
+        email,
+        name: displayName,
+      });
+      localStorage.setItem("user", JSON.stringify(res.data));
     } catch {
-      setError("Google login failed. Please try again.");
+      // Backend offline — store basic Firebase info so app still works
+      localStorage.setItem("user", JSON.stringify({ email, name: displayName }));
+    }
+  };
+
+  const googleLogin = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // signInWithPopup works fine — the previous COOP warning was non-fatal
+      // Using popup avoids the Vercel sessionStorage redirect issue entirely
+      const result = await signInWithPopup(auth, googleProvider);
+      await syncUserToBackend(result.user);
+      navigate("/home");
+    } catch (err) {
+      // COOP warning produces error code "auth/cancelled-popup-request" — ignore it
+      // only show error for real failures
+      if (err?.code !== "auth/cancelled-popup-request" && err?.code !== "auth/popup-closed-by-user") {
+        setError("Google login failed. Please try again.");
+      }
+    } finally {
       setLoading(false);
     }
   };
 
   const facebookLogin = async () => {
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
     try {
       facebookProvider.addScope("email");
       facebookProvider.addScope("public_profile");
       const result = await signInWithPopup(auth, facebookProvider);
-      const { email: userEmail, displayName } = result.user;
-      try {
-        const res = await axios.post(`${API_BASE_URL}/api/auth/google-login`, {
-          email: userEmail,
-          name: displayName,
-        });
-        localStorage.setItem("user", JSON.stringify(res.data));
-      } catch {
-        localStorage.setItem("user", JSON.stringify({ email: userEmail, name: displayName }));
-      }
+      await syncUserToBackend(result.user);
       navigate("/home");
-    } catch {
-      setError("Facebook login failed. Please try again.");
+    } catch (err) {
+      if (err?.code !== "auth/cancelled-popup-request" && err?.code !== "auth/popup-closed-by-user") {
+        setError("Facebook login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
