@@ -26,18 +26,21 @@ function OrderHistory() {
     fetchOrders();
   }, [userId]);
 
-  const fetchOrders = async () => {
+ const fetchOrders = async () => {
   try {
     const response = await axios.get(
       `${API_BASE_URL}/api/orders/my?userId=${user.id}`
     );
 
-    console.log("ORDERS:", response.data); // ✅ here
+    console.log("ORDERS:", response.data);
 
     setOrders(response.data);
 
   } catch (error) {
-    console.error(error);
+    console.error("Failed to load orders:", error);
+
+  } finally {
+    setLoading(false);   // ✅ VERY IMPORTANT
   }
 };
 
