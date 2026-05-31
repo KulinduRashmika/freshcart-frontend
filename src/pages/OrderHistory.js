@@ -29,7 +29,10 @@ function OrderHistory() {
   const fetchOrders = async () => {
     try {
       // ✅ Fixed: was completely missing the axios.get call
-      const res = await axios.get(`${API_BASE_URL}/api/orders/user/${userId}`);
+      axios.get(
+  `${API_BASE_URL}/api/orders/my?userId=${user.id}`
+)
+console.log(response.data);
       setOrders(res.data || []);
     } catch (err) {
       console.error("Failed to load orders", err);
