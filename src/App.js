@@ -14,11 +14,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
-        <Route path="/"         element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Protected — each page renders its own <Navbar /> */}
+        <Route path="/"                element={<Login />} />
+        <Route path="/register"        element={<Register />} />
         <Route path="/home"            element={<Home />} />
         <Route path="/cart"            element={<Cart />} />
         <Route path="/orders"          element={<OrderHistory />} />
