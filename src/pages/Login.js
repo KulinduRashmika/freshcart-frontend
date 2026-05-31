@@ -95,11 +95,12 @@ function Login() {
     navigate("/home");
 
   } catch (error) {
-    console.error(error);
-    setError("Google login failed.");
-  } finally {
-    setLoading(false);
-  }
+  console.error("GOOGLE LOGIN ERROR:", error);
+  console.error(error.code);
+  console.error(error.message);
+
+  setError("Google login failed.");
+}
 };
 
   const facebookLogin = async () => {
