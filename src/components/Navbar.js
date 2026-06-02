@@ -1,34 +1,36 @@
 import "./Navbar.css";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://freshcart-backend-gsss.onrender.com';
 
 function Navbar() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
-  const isAdmin = user?.email === "admin@gmail.com";
+  const firstName = user.name?.split(" ")[0] || "User";
 
   useEffect(() => {
     if (user?.id) fetchCartCount();
-  }, [location]);
+  }, []);
+
+  // Close drawer on route change
+  useEffect(() => { setMenuOpen(false); }, [location]);
 
   const fetchCartCount = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/cart/${user.id}`);
-      const items = res.data || [];
-      setCartCount(items.reduce((sum, i) => sum + i.quantity, 0));
-    } catch {
-      setCartCount(0);
-    }
+      const res = await axios.get(`${API_BASE_URL}/api/cart?userId=${user.id}`);
+      setCartCount(res.data?.length || 0);
+    } catch {}
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
+  const logout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     navigate("/");
   };
 
@@ -37,70 +39,83 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="nav-inner">
-
         {/* Brand */}
         <div className="nav-brand" onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
-          <span className="brand-icon">
+          <div className="brand-icon">
             <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
               <line x1="3" y1="6" x2="21" y2="6"/>
               <path d="M16 10a4 4 0 01-8 0"/>
             </svg>
-          </span>
+          </div>
           <span className="brand-name">FreshCart</span>
         </div>
 
-        {/* Nav Links */}
+        {/* Desktop nav links */}
         <div className="nav-links">
           <span className={isActive("/home")} onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
-            🏠 Home
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Home
           </span>
           <span className={isActive("/orders")} onClick={() => navigate("/orders")} style={{ cursor: "pointer" }}>
-            📦 Orders
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Orders
           </span>
-          {isAdmin && (
-            <span className="nav-link admin-link" onClick={() => navigate("/admin")} style={{ cursor: "pointer" }}>
-              ⚙️ Admin
-            </span>
-          )}
         </div>
 
-        {/* Right Actions */}
+        {/* Desktop actions */}
         <div className="nav-actions">
-          {user?.name && (
-            <span className="nav-greeting">Hi, {user.name.split(" ")[0]}</span>
-          )}
+          <span className="nav-greeting">Hi, {firstName}</span>
 
-          {/* Cart */}
           <button className="cart-nav-btn" onClick={() => navigate("/cart")}>
-            <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/>
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
             </svg>
-            Cart
             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </button>
 
-          {/* Profile */}
           <button className="nav-btn" onClick={() => navigate("/profile")}>
-            <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
             Profile
           </button>
 
-          {/* Logout */}
-          <button className="logout-btn" onClick={handleLogout}>
-            <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
+          <button className="logout-btn" onClick={logout}>
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
             Logout
           </button>
         </div>
 
+        {/* Mobile: cart icon + hamburger */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button className="cart-nav-btn" onClick={() => navigate("/cart")} style={{ display: "flex" }}>
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </button>
+
+          <button className="nav-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
+            <span /><span /><span />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      <div className={`nav-drawer ${menuOpen ? "open" : ""}`}>
+        <span className={isActive("/home")} onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>🏠 Home</span>
+        <span className={isActive("/orders")} onClick={() => navigate("/orders")} style={{ cursor: "pointer" }}>📋 Orders</span>
+        <div className="nav-drawer-actions">
+          <button className="nav-btn" onClick={() => navigate("/profile")}>👤 Profile</button>
+          <button className="logout-btn" onClick={logout}>↪ Logout</button>
+        </div>
       </div>
     </nav>
   );
