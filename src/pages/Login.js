@@ -46,7 +46,7 @@ function Login() {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       if (response.data?.message === "Login successful") {
         localStorage.setItem("user",  JSON.stringify(response.data));
-        localStorage.setItem("token", response.data.token || response.data.email); // fallback if no token
+        localStorage.setItem("token", response.data.token || response.data.email);
         navigate("/home");
       } else {
         setError(response.data?.error || "Login failed. Please try again.");
@@ -64,20 +64,21 @@ function Login() {
     }
   };
 
-  const syncUserToBackend = async (firebaseUser) => {
+  // ✅ Fixed: accepts provider type to call correct backend endpoint
+  const syncUserToBackend = async (firebaseUser, provider = "google") => {
     const { email, displayName } = firebaseUser;
+    const endpoint = provider === "facebook" ? "facebook-login" : "google-login";
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/google-login`, {
+      const res = await axios.post(`${API_BASE_URL}/api/auth/${endpoint}`, {
         email,
         name: displayName,
       });
       localStorage.setItem("user", JSON.stringify(res.data));
-      // ✅ Set token so Home.js guard doesn't kick social login users out
       localStorage.setItem("token", res.data.token || email);
     } catch {
       // Backend offline — store basic Firebase info so app still works
       localStorage.setItem("user", JSON.stringify({ email, name: displayName }));
-      localStorage.setItem("token", email); // use email as fallback token
+      localStorage.setItem("token", email);
     }
   };
 
@@ -86,9 +87,10 @@ function Login() {
     setError("");
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      await syncUserToBackend(result.user);
+      await syncUserToBackend(result.user, "google");
       navigate("/home");
     } catch (err) {
+      console.error("Google login error:", err.code, err.message);
       if (err?.code !== "auth/cancelled-popup-request" && err?.code !== "auth/popup-closed-by-user") {
         setError("Google login failed. Please try again.");
       }
@@ -97,6 +99,7 @@ function Login() {
     }
   };
 
+  // ✅ Fixed: scopes set before signInWithPopup, passes "facebook" to syncUserToBackend
   const facebookLogin = async () => {
     setLoading(true);
     setError("");
@@ -104,9 +107,10 @@ function Login() {
       facebookProvider.addScope("email");
       facebookProvider.addScope("public_profile");
       const result = await signInWithPopup(auth, facebookProvider);
-      await syncUserToBackend(result.user);
+      await syncUserToBackend(result.user, "facebook");
       navigate("/home");
     } catch (err) {
+      console.error("Facebook login error:", err.code, err.message);
       if (err?.code !== "auth/cancelled-popup-request" && err?.code !== "auth/popup-closed-by-user") {
         setError("Facebook login failed. Please try again.");
       }
@@ -117,6 +121,7 @@ function Login() {
 
   return (
     <div className="login-page">
+      {/* ── Left panel (hidden on mobile) ── */}
       <div className="login-left">
         <div className="login-left-content">
           <div className="login-brand">
@@ -145,7 +150,20 @@ function Login() {
         <div className="login-orb-a" /><div className="login-orb-b" />
       </div>
 
+      {/* ── Right panel / full screen on mobile ── */}
       <div className="login-right">
+        {/* Mobile-only top brand bar */}
+        <div className="mobile-brand">
+          <div className="mobile-brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+          </div>
+          <span className="mobile-brand-name">FreshCart</span>
+        </div>
+
         <div className="login-card">
           <div className="login-card-header">
             <h2>Welcome back</h2>
@@ -168,7 +186,15 @@ function Login() {
                 <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="field-icon">
                   <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/>
                 </svg>
-                <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" disabled={loading} />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -181,7 +207,15 @@ function Login() {
                 <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="field-icon">
                   <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
-                <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" disabled={loading} />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  disabled={loading}
+                />
               </div>
             </div>
 
