@@ -53,12 +53,18 @@ body { background: var(--bg); color: var(--cream); font-family: 'DM Sans', sans-
 
 /* ── Search row ── */
 .search-row {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 16px; flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: nowrap; /* ✅ keep count on same line always */
 }
 .search-box {
-  position: relative; flex: 1; min-width: 0;
-  display: flex; align-items: center;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 .search-icon {
   position: absolute; left: 12px;
@@ -79,7 +85,12 @@ body { background: var(--bg); color: var(--cream); font-family: 'DM Sans', sans-
   font-size: 13px; cursor: pointer; transition: color var(--t);
 }
 .search-clear:hover { color: var(--cream); }
-.results-count { font-size: 13px; color: var(--cream-d); white-space: nowrap; flex-shrink: 0; }
+.results-count {
+  font-size: 12px;
+  color: var(--cream-d);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 /* ── Category pills ── */
 .category-strip {
@@ -103,12 +114,12 @@ body { background: var(--bg); color: var(--cream); font-family: 'DM Sans', sans-
 /* ── Product Grid ── */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* ✅ always 2 col on mobile */
   gap: 12px;
 }
 
 .skeleton-card {
-  height: 280px; background: var(--bg-card); border: 1px solid var(--border);
+  height: 260px; background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--r-lg); animation: shimmer 1.5s ease-in-out infinite;
 }
 @keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:.9} }
@@ -120,12 +131,14 @@ body { background: var(--bg); color: var(--cream); font-family: 'DM Sans', sans-
   display: flex; flex-direction: column;
   transition: border-color var(--t), transform var(--t), box-shadow var(--t);
   animation: fadeUp 0.5s ease both;
+  /* ✅ ensure card never collapses */
+  min-width: 0;
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
 .product-card:hover { border-color: var(--border-h); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
 
-.product-img-wrap { position: relative; overflow: hidden; aspect-ratio: 4/3; }
-.product-img { width:100%; height:100%; object-fit:cover; transition: transform 0.4s ease; }
+.product-img-wrap { position: relative; overflow: hidden; aspect-ratio: 4/3; flex-shrink: 0; }
+.product-img { width:100%; height:100%; object-fit:cover; transition: transform 0.4s ease; display: block; }
 .product-card:hover .product-img { transform: scale(1.06); }
 .product-cat-badge {
   position: absolute; top: 8px; left: 8px;
@@ -136,29 +149,61 @@ body { background: var(--bg); color: var(--cream); font-family: 'DM Sans', sans-
   padding: 3px 8px; border-radius: 99px;
 }
 
-.product-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.product-name { font-size: 13px; font-weight: 500; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-body {
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 5px; flex: 1;
+  min-width: 0; /* ✅ prevents text overflow breaking layout */
+}
+.product-name {
+  font-size: 13px; font-weight: 500; color: var(--cream);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .product-desc {
-  font-size: 12px; color: var(--cream-m); line-height: 1.5; flex: 1;
+  font-size: 11px; color: var(--cream-m); line-height: 1.5; flex: 1;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.product-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; gap: 8px; }
-.product-price { font-size: 14px; font-weight: 600; color: var(--gold); flex-shrink: 0; }
 
-.add-btn {
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 7px 10px;
-  background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);
-  border-radius: 8px; font-size: 12px; font-weight: 500;
-  color: var(--gold); transition: all var(--t); cursor: pointer; flex-shrink: 0;
+/* ── Product footer: price left, button right ── */
+.product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  gap: 6px;
+  flex-wrap: nowrap; /* ✅ never wrap — keep price and button on one line */
 }
-.add-btn svg { width: 13px; height: 13px; stroke: currentColor; }
+.product-price {
+  font-size: 13px; font-weight: 600; color: var(--gold);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ✅ Fixed Add button — compact, never full-width */
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 10px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+  transition: all var(--t);
+  cursor: pointer;
+  flex-shrink: 0;
+  width: auto;        /* ✅ never stretch */
+  white-space: nowrap;
+}
+.add-btn svg { width: 12px; height: 12px; stroke: currentColor; flex-shrink: 0; }
 .add-btn:hover { background: rgba(201,168,76,0.2); border-color: rgba(201,168,76,0.5); }
 .add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .add-btn.added { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.3); color: var(--green); }
 
 .btn-spinner {
-  width: 13px; height: 13px; border-radius: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
   border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--gold);
   animation: spin 0.7s linear infinite;
 }
@@ -194,15 +239,19 @@ body { background: var(--bg); color: var(--cream); font-family: 'DM Sans', sans-
 @media (min-width: 480px) {
   .products-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .product-name { font-size: 14px; }
-  .product-price { font-size: 15px; }
+  .product-price { font-size: 14px; }
+  .product-body { padding: 12px; }
 }
 
 @media (min-width: 640px) {
   .hero { padding: 48px 24px 36px; }
   .home-main { padding: 0 24px 60px; }
-  .search-row { flex-wrap: nowrap; }
   .search-box { max-width: 440px; }
   .products-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .product-desc { font-size: 12px; }
+  .product-price { font-size: 15px; }
+  .add-btn { font-size: 12px; padding: 7px 12px; }
+  .add-btn svg { width: 13px; height: 13px; }
 }
 
 @media (min-width: 900px) {
