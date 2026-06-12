@@ -97,23 +97,31 @@ function Login() {
     }
   };
 
-  const facebookLogin = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      facebookProvider.addScope("email");
-      facebookProvider.addScope("public_profile");
-      const result = await signInWithPopup(auth, facebookProvider);
-      await syncUserToBackend(result.user);
-      navigate("/home");
-    } catch (err) {
-      if (err?.code !== "auth/cancelled-popup-request" && err?.code !== "auth/popup-closed-by-user") {
-        setError("Facebook login failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+ const facebookLogin = async () => {
+  setLoading(true);
+  setError("");
+
+  try {
+    facebookProvider.addScope("email");
+    facebookProvider.addScope("public_profile");
+
+    const result = await signInWithPopup(auth, facebookProvider);
+
+    console.log("Facebook User:", result.user);
+
+    await syncUserToBackend(result.user);
+    navigate("/home");
+
+  } catch (err) {
+    console.error("Facebook Login Error:", err);
+    console.error("Error Code:", err.code);
+    console.error("Error Message:", err.message);
+
+    setError(`${err.code}: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-page">
